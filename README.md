@@ -1,42 +1,105 @@
-# GymTrack 🏋️
+<img width="1912" height="1196" alt="image" src="https://github.com/user-attachments/assets/fc12787b-889f-43fe-adab-51e0bab59dd6" /># FitTrack
 
-A lightweight, frontend-only gym progress tracker PWA with streaks, custom workout plans, and charts.
+FitTrack is a Progressive Web App (PWA) for tracking gym workouts, maintaining streaks, and visualizing fitness progress. It is a frontend-only application built with React and modern tools for fast and efficient performance.
 
-## Features
-- 📋 **Workout Plan Builder** — custom exercises, weekly schedule
-- ✅ **Daily Workout Tracking** — check off exercises as you go
-- 🔥 **Streak System** — LeetCode-style streak tracking
-- 🛋️ **Rest Day Support** — mark rest days without breaking streak
-- 📊 **Progress Charts** — weekly bars, monthly calendar, streak heatmap
-- 📱 **PWA** — install on mobile, works offline
-- 💾 **No login required** — data stored in localStorage
+---
 
-## Getting Started
+## Usage
+
+This project provides a complete setup for managing workout plans and tracking fitness progress. To get started, follow these steps:
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Deva-nand07/FitTrack-web-app.git
+```
+
+---
+
+### 2. Navigate into the project directory
+
+```bash
+cd FitTrack-web-app
+```
+
+---
+
+### 3. Install dependencies
 
 ```bash
 npm install
+```
+
+---
+
+### 4. Start the development server
+
+```bash
 npm run dev
 ```
 
-## Build for Production
+---
 
-```bash
-npm run build
-npm run preview
-```
+### 5. Start using the app
+
+* Create a workout plan in the Plan section
+* Assign exercises to specific days
+* Track workouts in the Today section
+* Mark exercises as completed
+* Use Rest Day when needed
+* View progress in the Progress section
+
+---
+
+## Features
+
+* Custom workout plan builder
+* Daily workout tracking
+* Streak-based consistency system
+* Rest day support
+* Weekly and monthly progress visualization
+* Heatmap-based activity tracking
+* Installable PWA with offline support
+* Local storage-based data persistence
+
+---
 
 ## Tech Stack
-- React 18 + Vite
-- Tailwind CSS
-- Zustand (state management)
-- Recharts (charts)
-- localStorage (data persistence)
-- Vite PWA Plugin (service workers, offline support)
 
-## How to Use
+This project uses:
 
-1. Go to **Plan** tab → create a workout plan with exercises and assign days of the week
-2. Come back to **Today** tab to track your workout
-3. Check off exercises as you complete them
-4. Use **Mark as Rest Day** on off days to keep your streak alive
-5. Check **Progress** tab to see charts and streak calendar
+* React (with Vite)
+* Tailwind CSS
+* Zustand
+* Recharts
+* localStorage
+* vite-plugin-pwa
+
+---
+
+## Project Setup
+
+You can customize Tailwind by editing:
+
+```
+tailwind.config.js
+vite.config.js
+```
+
+---
+## Demo
+
+---
+
+<img width="1919" height="1199" alt="image" src="https://github.com/user-attachments/assets/b2c450cf-128b-41d1-b76d-473bf4e77d63" />
+<img width="1912" height="1196" alt="image" src="https://github.com/user-attachments/assets/940fab17-6551-449a-8dd9-282932632285" />
+<img width="1919" height="1199" alt="image" src="https://github.com/user-attachments/assets/368b3e5f-deba-4fdd-a6d8-b76b79cbbd71" />
+
+---
+
+## Contributing
+
+Contributions are welcome. If you find any issues or have suggestions, feel free to open an issue or submit a pull request.
+
+---
+
