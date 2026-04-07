@@ -143,7 +143,7 @@ export default function TodayTab() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ ...S.exName, textDecoration: isDone ? 'line-through' : 'none' }}>{ex.name}</p>
                       <p style={S.exMeta}>
-                        {ex.sets} sets &times; {ex.reps} {ex.type === 'cardio' ? 'min' : 'reps'}
+                        {ex.sets} sets &times; {ex.reps} {ex.type === 'cardio' ? 'sec' : 'reps'}
                         {ex.weightMode === 'plates'
                           ? ` · ${platesToKg(ex.plates || {})}kg (${kgToPlatesDisplay(ex.plates || {})})`
                           : ex.weight ? ` · ${ex.weight}kg` : ''}

@@ -110,7 +110,7 @@ function ExerciseRow({ ex, onChange, onRemove }) {
             value={ex.sets} onChange={e => onChange('sets', parseInt(e.target.value) || 1)} />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={cs.label}>{ex.type === 'cardio' ? 'Minutes' : 'Reps'}</label>
+          <label style={cs.label}>{ex.type === 'cardio' ? 'Seconds' : 'Reps'}</label>
           <input type="number" min="1" style={cs.input}
             value={ex.reps} onChange={e => onChange('reps', parseInt(e.target.value) || 1)} />
         </div>
