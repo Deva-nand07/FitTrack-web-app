@@ -1,4 +1,4 @@
-<img width="1912" height="1196" alt="image" src="https://github.com/user-attachments/assets/fc12787b-889f-43fe-adab-51e0bab59dd6" /># FitTrack
+# FitTrack
 
 FitTrack is a Progressive Web App (PWA) for tracking gym workouts, maintaining streaks, and visualizing fitness progress. It is a frontend-only application built with React and modern tools for fast and efficient performance.
 
