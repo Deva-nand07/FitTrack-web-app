@@ -32,15 +32,14 @@ export function kgToPlatesDisplay(plates) {
   return parts.join(" + ") + " / side";
 }
 
-function todayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 function dateKey(offset = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function todayKey() {
+  return dateKey(0);
 }
 
 function dayName(offset = 0) {
@@ -49,29 +48,102 @@ function dayName(offset = 0) {
   return DAYS[d.getDay()];
 }
 
-// Central helper: given a date offset, decide what "type" that day is.
-// Returns: 'rest' | 'workout_done' | 'workout_missed' | 'free' (no plan, no log)
-function classifyDay(plans, log, offset) {
+// ─────────────────────────────────────────────────────────────────────────────
+// classifyDay — single source of truth
+//
+// Return values:
+//   'before_install'  — before app was first used, no data → stops streak lookback
+//   'rest'            — manual rest tap OR plan restDay → streak safe
+//   'workout_done'    — all scheduled exercises completed
+//   'in_progress'     — today, has a plan, workout started but not finished yet
+//   'workout_missed'  — past day with scheduled plan but not completed
+//   'unscheduled'     — no plan scheduled AND no rest marked → breaks streak
+//                       (also used for today with no plan → shown as grey)
+// ─────────────────────────────────────────────────────────────────────────────
+function classifyDay(plans, log, installDate, offset) {
+  const isToday = offset === 0;
   const k = dateKey(offset);
   const day = dayName(offset);
   const dayLog = log[k];
 
-  // 1. Manual rest tap OR plan-level rest day → always "rest"
+  // Stop lookback at install boundary
+  if (k < installDate && !dayLog) return "before_install";
+
+  // Manual rest tap
+  if (dayLog && dayLog.rest) return "rest";
+
+  // Plan-level rest day
   const isPlanRest = plans.some((p) => (p.restDays || []).includes(day));
-  if ((dayLog && dayLog.rest) || isPlanRest) return "rest";
+  if (isPlanRest) return "rest";
 
-  // 2. No workout plans scheduled for this day → free day (doesn't break streak)
+  // Check if any workout is scheduled for this day
   const scheduled = plans.filter((p) => (p.days || []).includes(day));
-  if (scheduled.length === 0) return "free";
 
-  // 3. Has scheduled plans — check if all exercises are done
-  if (!dayLog) return "workout_missed";
+  // ── FIX 2: No plan today → always 'unscheduled' (grey), never yellow ──
+  if (scheduled.length === 0) return "unscheduled";
 
+  // Has a scheduled plan — check completion
   const allDone = scheduled.every((p) => {
-    const exDone = (dayLog[p.id] && dayLog[p.id].exercises) || {};
+    const exDone = dayLog?.[p.id]?.exercises || {};
     return p.exercises.every((e) => exDone[e.id]);
   });
-  return allDone ? "workout_done" : "workout_missed";
+
+  if (allDone) return "workout_done";
+
+  // Today's workout is scheduled but not fully done yet → in_progress (yellow)
+  if (isToday) return "in_progress";
+
+  // Past day, scheduled but not done → missed
+  return "workout_missed";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Streak calculation
+// Rules:
+//  • 'rest'         → safe, counts toward streak
+//  • 'workout_done' → counts toward streak
+//  • 'in_progress'  → skip (don't add, don't break — it's still today)
+//  • 'unscheduled'  → BREAKS streak (user wants this)
+//  • 'workout_missed'→ BREAKS streak
+//  • 'before_install'→ stops the lookback loop
+// ─────────────────────────────────────────────────────────────────────────────
+function calcStreak(plans, log, installDate) {
+  let cur = 0;
+  let best = 0;
+  let inStreak = true; // tracking current streak from today backwards
+  let curCount = 0;
+
+  for (let i = 0; i < 365; i++) {
+    const type = classifyDay(plans, log, installDate, -i);
+
+    if (type === "before_install") break;
+
+    if (type === "in_progress") {
+      // Today not done yet — don't count it, don't break
+      continue;
+    }
+
+    if (type === "rest" || type === "workout_done") {
+      curCount++;
+      best = Math.max(best, curCount);
+      continue;
+    }
+
+    // 'unscheduled' or 'workout_missed' — streak resets
+    // ── FIX 1: once we hit a break, stop counting current streak ──
+    if (inStreak) {
+      // We were in an unbroken run — record current streak
+      cur = curCount;
+      inStreak = false;
+    }
+    curCount = 0;
+    // Keep scanning past for best streak
+  }
+
+  // If we never hit a break, cur = whatever we counted
+  if (inStreak) cur = curCount;
+
+  return { current: cur, best: Math.max(best, cur) };
 }
 
 export const useStore = create(
@@ -80,6 +152,7 @@ export const useStore = create(
       plans: [],
       log: {},
       streak: { current: 0, best: 0 },
+      installDate: todayKey(),
 
       addPlan: (plan) =>
         set((s) => ({
@@ -113,35 +186,15 @@ export const useStore = create(
       },
 
       recalcStreak: () => {
-        const { plans, log } = get();
-        let cur = 0;
-        const best = get().streak.best || 0;
-
-        for (let i = 0; i < 365; i++) {
-          const type = classifyDay(plans, log, -i);
-          // 'rest' and 'free' days keep the streak alive without counting as a workout
-          if (type === "rest" || type === "free") {
-            cur++;
-            continue;
-          }
-          // Completed workout — increment
-          if (type === "workout_done") {
-            cur++;
-            continue;
-          }
-          // Missed workout — streak stops here
-          break;
-        }
-
-        set({ streak: { current: cur, best: Math.max(cur, best) } });
+        const { plans, log, installDate } = get();
+        const streak = calcStreak(plans, log, installDate);
+        set({ streak });
       },
 
-      // Used by heatmaps & history — returns 'rest'|'workout_done'|'workout_missed'|'free'|'future'
       getDayType: (offset) => {
-        // Don't colour future days
         if (offset > 0) return "future";
-        const { plans, log } = get();
-        return classifyDay(plans, log, offset);
+        const { plans, log, installDate } = get();
+        return classifyDay(plans, log, installDate, offset);
       },
 
       getTodayLog: () => get().log[todayKey()] || {},
@@ -153,6 +206,18 @@ export const useStore = create(
       dayName,
       todayKey,
     }),
-    { name: `gymtrack-storage-${getDeviceId()}` },
+    {
+      name: `gymtrack-storage-${getDeviceId()}`,
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Set installDate if missing (old installs)
+        if (!state.installDate) state.installDate = todayKey();
+        // ── FIX 1: Immediately recalc streak on load to wipe stale 365 value ──
+        // Use setTimeout so Zustand finishes hydrating first
+        setTimeout(() => {
+          useStore.getState().recalcStreak();
+        }, 0);
+      },
+    },
   ),
 );
