@@ -267,7 +267,7 @@ export default function TodayTab() {
                       </p>
                       <p style={S.exMeta}>
                         {ex.sets} sets &times; {ex.reps}{" "}
-                        {ex.type === "cardio" ? "min" : "reps"}
+                        {ex.type === "cardio" ? "sec" : "reps"}
                         {ex.weightMode === "plates"
                           ? ` · ${platesToKg(ex.plates || {})}kg (${kgToPlatesDisplay(ex.plates || {})})`
                           : ex.weight
